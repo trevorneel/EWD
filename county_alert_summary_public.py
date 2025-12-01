@@ -13,35 +13,26 @@ SERVICE_ROOT = (
 )
 BASE_ALERTS = "https://api.weather.gov/alerts/active"
 
-# If this set is empty, ALL events are accepted.
-# To restrict later, put exact event names in this set.
+
 ALLOW_EVENTS = set()
 
 
 def iter_active_alert_props():
-    """
-    Iterate over all active alerts from NWS.
-
-    IMPORTANT: no 'limit' parameter – the alerts API can 400 if 'limit' is present.
-    Follows pagination.next until there are no more pages.
-    """
+  
     url = f"{BASE_ALERTS}?status=actual&message_type=alert"
     while url:
         data = get_json(url)
         for feat in data.get("features", []):
             p = feat.get("properties", {})
             ev = p.get("event")
-            # If ALLOW_EVENTS is empty, accept all events; otherwise filter.
+           
             if not ALLOW_EVENTS or ev in ALLOW_EVENTS:
                 yield p
         url = data.get("pagination", {}).get("next")
 
 
 def ww_tag(event_text: str):
-    """
-    Classify an event name into 'warning', 'watch', or 'advisory'
-    based on the presence of those words in the event text.
-    """
+   
     e = (event_text or "").lower()
     if "warning" in e:
         return "warning"
@@ -55,13 +46,13 @@ def now_iso():
 
 
 def main():
-    # Find county polygon layer and its objectIdField
+   
     layer_id, layer_info = pick_polygon_layer(SERVICE_ROOT)
     urls = layer_urls(SERVICE_ROOT, layer_id)
     oid_field = layer_info.get("objectIdField", "OBJECTID")
 
-    # Aggregate alerts by county UGC code
-    agg = {}  # ugc -> {"warn": set(), "watch": set(), "adv": set()}
+   
+    agg = {}  
     for p in iter_active_alert_props():
         event_name = p.get("event")
         tag = ww_tag(event_name)
@@ -79,7 +70,7 @@ def main():
 
     print(f"Aggregated alerts for {len(agg)} county UGCs.")
 
-    # Pull counties and build updates
+   
     updates = []
     now = now_iso()
     county_count = 0
