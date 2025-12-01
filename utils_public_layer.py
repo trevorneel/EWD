@@ -6,9 +6,7 @@ USER_AGENT = "Class-Project/1.0 (contact: example@class.edu)"
 
 def get_json(url: str, params: Dict = None, method: str = "GET",
              data: Dict = None, timeout: int = 30):
-    """
-    Helper to GET/POST JSON with a polite User-Agent.
-    """
+  
     headers = {"User-Agent": USER_AGENT}
     if method == "GET":
         r = requests.get(url, params=params, headers=headers, timeout=timeout)
@@ -86,11 +84,7 @@ def batched(iterable, n: int):
 
 
 def apply_updates(apply_url: str, updates: List[Dict],
-                  batch: int = 500, sleep: float = 0.2) -> int:
-    """
-    Call applyEdits in batches and return the count of successful updates.
-    Also prints any error from the service.
-    """
+   
     total = 0
     for b in batched(updates, batch):
         data = {"f": "json", "updates": json.dumps(b)}
