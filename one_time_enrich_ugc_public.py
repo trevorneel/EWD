@@ -1,6 +1,3 @@
-# Populate 'ugc' for all counties using intelligent fuzzy matching.
-# This version fixes >3000 county mismatches.
-
 import re
 from utils_public_layer import (
     get_json,
@@ -21,9 +18,6 @@ FIELD_UGC = "ugc"
 
 ZONES_INDEX = "https://api.weather.gov/zones?type=county"
 
-# -----------------------------
-# NORMALIZATION FUNCTIONS
-# -----------------------------
 
 def slug(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "", (s or "").lower())
@@ -40,14 +34,14 @@ def normalize_name(name: str) -> str:
 
     n = name.lower()
 
-    # Remove common suffixes
+   
     n = re.sub(r"\b(county|parish|borough|city|census area|municipality)\b", "", n)
 
-    # Canonical replacements
+   
     n = n.replace("saint ", "st ")
     n = n.replace("sainte ", "ste ")
 
-    # Remove punctuation and spaces
+    
     n = re.sub(r"[^a-z0-9]+", "", n)
 
     return n
@@ -110,7 +104,7 @@ def main():
         a = f.get("attributes", {})
         county_count += 1
 
-        # Skip if UGC already exists
+        
         if a.get(FIELD_UGC):
             continue
 
@@ -133,7 +127,7 @@ def main():
                 }
             })
         else:
-            # Debug print for unmatched counties (optional)
+           
             print(f"[NO MATCH] {state} - {raw_name} -> key='{key}'")
 
     print(f"Counties processed: {county_count}")
