@@ -6,7 +6,6 @@ USER_AGENT = "Class-Project/1.0 (contact: example@class.edu)"
 
 def get_json(url: str, params: Dict = None, method: str = "GET",
              data: Dict = None, timeout: int = 30):
-  
     headers = {"User-Agent": USER_AGENT}
     if method == "GET":
         r = requests.get(url, params=params, headers=headers, timeout=timeout)
@@ -17,9 +16,6 @@ def get_json(url: str, params: Dict = None, method: str = "GET",
 
 
 def pick_polygon_layer(service_root: str) -> Tuple[int, Dict]:
-    """
-    Return (layer_id, layer_info) for the polygon layer that best matches 'counties'.
-    """
     root = get_json(f"{service_root}?f=json")
     layers = root.get("layers", [])
     candidates = []
@@ -49,10 +45,6 @@ def layer_urls(service_root: str, layer_id: int) -> Dict[str, str]:
 
 def query_all(layer_query_url: str, out_fields: str,
               where: str = "1=1", chunk: int = 5000):
-    """
-    Generator over all features that match 'where'.
-    Does NOT set orderByFields to avoid invalid field issues.
-    """
     offset = 0
     while True:
         params = {
@@ -82,9 +74,16 @@ def batched(iterable, n: int):
     if batch:
         yield batch
 
+
 def apply_updates(
     apply_url: str,
-    updates: List[Dict]): 
+    updates: List[Dict],
+    batch: int = 500,
+    sleep: float = 0.0,
+):
+    if not updates:
+        return 0
+
     total = 0
     for b in batched(updates, batch):
         data = {"f": "json", "updates": json.dumps(b)}
@@ -101,6 +100,7 @@ def apply_updates(
             print("applyEdits unexpected response:", js)
             return total
 
-        time.sleep(sleep)
+        if sleep > 0:
+            time.sleep(sleep)
 
     return total
