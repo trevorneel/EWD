@@ -11,28 +11,25 @@ SERVICE_ROOT = (
     "https://services1.arcgis.com/qr14biwnHA6Vis6l/"
     "arcgis/rest/services/USA_Counties_EWD/FeatureServer"
 )
-BASE_ALERTS = "https://api.weather.gov/alerts/active"
 
+BASE_ALERTS = "https://api.weather.gov/alerts/active"
 
 ALLOW_EVENTS = set()
 
 
 def iter_active_alert_props():
-  
     url = f"{BASE_ALERTS}?status=actual&message_type=alert"
     while url:
         data = get_json(url)
         for feat in data.get("features", []):
             p = feat.get("properties", {})
             ev = p.get("event")
-           
             if not ALLOW_EVENTS or ev in ALLOW_EVENTS:
                 yield p
         url = data.get("pagination", {}).get("next")
 
 
 def ww_tag(event_text: str):
-   
     e = (event_text or "").lower()
     if "warning" in e:
         return "warning"
@@ -46,18 +43,15 @@ def now_iso():
 
 
 def main():
-   
     layer_id, layer_info = pick_polygon_layer(SERVICE_ROOT)
     urls = layer_urls(SERVICE_ROOT, layer_id)
     oid_field = layer_info.get("objectIdField", "OBJECTID")
 
-   
-    agg = {}  
+    agg = {}
     for p in iter_active_alert_props():
         event_name = p.get("event")
         tag = ww_tag(event_name)
         ugcs = (p.get("geocode") or {}).get("UGC") or []
-        # Only use county UGCs (3rd char == 'C')
         county_ugcs = [u for u in ugcs if len(u) > 2 and u[2] == "C"]
         for ugc in county_ugcs:
             rec = agg.setdefault(ugc, {"warn": set(), "watch": set(), "adv": set()})
@@ -70,7 +64,6 @@ def main():
 
     print(f"Aggregated alerts for {len(agg)} county UGCs.")
 
-   
     updates = []
     now = now_iso()
     county_count = 0
@@ -81,8 +74,8 @@ def main():
         ugc = a.get("ugc")
 
         county_count += 1
-
         rec = agg.get(ugc, {"warn": set(), "watch": set(), "adv": set()})
+
         warning_names = sorted(rec["warn"])
         watch_names = sorted(rec["watch"])
         adv_names = sorted(rec["adv"])
@@ -90,6 +83,7 @@ def main():
         warning_count = len(warning_names)
         watch_count = len(watch_names)
         advisory_count = len(adv_names)
+
         status_level = 2 if warning_count > 0 else (1 if watch_count > 0 else 0)
 
         updates.append(
@@ -98,17 +92,11 @@ def main():
                     oid_field: oid,
                     "status_level": status_level,
                     "warning_count": warning_count,
-                    "warning_names": "; ".join(warning_names)
-                    if warning_names
-                    else None,
+                    "warning_names": "; ".join(warning_names) if warning_names else None,
                     "watch_count": watch_count,
-                    "watch_names": "; ".join(watch_names)
-                    if watch_names
-                    else None,
+                    "watch_names": "; ".join(watch_names) if watch_names else None,
                     "advisory_count": advisory_count,
-                    "advisory_names": "; ".join(adv_names)
-                    if adv_names
-                    else None,
+                    "advisory_names": "; ".join(adv_names) if adv_names else None,
                     "last_updated": now,
                 }
             }
