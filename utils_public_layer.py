@@ -82,9 +82,9 @@ def batched(iterable, n: int):
     if batch:
         yield batch
 
-
-def apply_updates(apply_url: str, updates: List[Dict],
-   
+def apply_updates(
+    apply_url: str,
+    updates: List[Dict]): 
     total = 0
     for b in batched(updates, batch):
         data = {"f": "json", "updates": json.dumps(b)}
